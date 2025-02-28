@@ -1,0 +1,22 @@
+C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/tb.sv {1 {vlog -work work -sv C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/tb.sv
+Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+-- Compiling module tb
+
+Top level modules:
+	tb
+
+} {} {}} C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/split_even_odd.sv {1 {vlog -work work -sv C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/split_even_odd.sv
+Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+-- Compiling module split_even_odd
+
+Top level modules:
+	split_even_odd
+
+} {} {}} C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_8_elements.sv {1 {vlog -work work -sv C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_8_elements.sv
+Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+-- Compiling module fft_8_elements
+
+Top level modules:
+	fft_8_elements
+
+} {} {}}

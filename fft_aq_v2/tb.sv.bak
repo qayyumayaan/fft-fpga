@@ -1,0 +1,93 @@
+`timescale 1ns/1ps
+
+module fft_16_elements_tb;
+
+    // Parameters
+    parameter N = 16;
+    parameter Q = 15; // Number of fractional bits in Q1.15 format
+
+    // Test input data (provided)
+    integer x_int [0:N-1] = '{
+        2404, 4756, 7005, 9102, 11002, 12665, 14053, 15136,
+        15892, 16305, 16364, 16069, 15426, 14449, 13159, 11585
+    };
+
+    // Scaled input data in Q1.15 format
+    logic signed [15:0] x_real [0:N-1];
+    logic signed [15:0] x_imag [0:N-1];
+
+    // FFT outputs in Q1.15 format
+    logic signed [15:0] fft_real [0:N-1];
+    logic signed [15:0] fft_imag [0:N-1];
+
+    // Floating-point representations for display
+    real x_real_float [0:N-1];
+    real x_imag_float [0:N-1];
+    real fft_real_float [0:N-1];
+    real fft_imag_float [0:N-1];
+
+    // Scaling factor to convert integers to Q1.15 format
+    real scaling_factor;
+    real max_input_value;
+    integer i;
+
+    // Instantiate the fft_16_elements module
+    fft_16_elements fft_inst (
+        .x_real (x_real),
+        .x_imag (x_imag),
+        .fft_real (fft_real),
+        .fft_imag (fft_imag)
+    );
+
+    initial begin
+        // Find the maximum absolute value in the input data
+        max_input_value = 0;
+        for (i = 0; i < N; i++) begin
+            if (x_int[i] > max_input_value)
+                max_input_value = x_int[i];
+        end
+
+        // Determine the scaling factor to fit the input data into Q1.15 format
+        scaling_factor = max_input_value != 0 ? (0.9 / max_input_value) : 1.0;
+
+        // Display the scaling factor
+        $display("Scaling factor applied to input data: %f", scaling_factor);
+
+        // Initialize inputs and convert to Q1.15 format
+        for (i = 0; i < N; i++) begin
+            real scaled_value;
+            scaled_value = x_int[i] * scaling_factor;
+            // Convert scaled value to Q1.15 format
+            x_real[i] = $rtoi(scaled_value * (1 << Q));
+            x_imag[i] = 16'sd0; // Imaginary parts are zero
+            // Store floating-point values for display
+            x_real_float[i] = scaled_value;
+            x_imag_float[i] = 0.0;
+        end
+
+        // Wait for combinational logic to settle
+        #10;
+
+        // Convert outputs from Q1.15 format to floating-point for display
+        for (i = 0; i < N; i++) begin
+            fft_real_float[i] = fft_real[i] / (1 << Q);
+            fft_imag_float[i] = fft_imag[i] / (1 << Q);
+        end
+
+        // Display input data
+        $display("\nInput Data (Scaled and Converted to Q1.15 Format):");
+        for (i = 0; i < N; i++) begin
+            $display("x[%0d] = %f + j%f", i, x_real_float[i], x_imag_float[i]);
+        end
+
+        // Display FFT output data
+        $display("\nFFT Output Data:");
+        for (i = 0; i < N; i++) begin
+            $display("FFT[%0d] = %f + j%f", i, fft_real_float[i], fft_imag_float[i]);
+        end
+
+        // End simulation
+        $finish;
+    end
+
+endmodule

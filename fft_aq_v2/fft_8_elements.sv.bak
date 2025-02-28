@@ -1,0 +1,202 @@
+module fft_8_elements (
+    input  logic signed [15:0] x_real [0:7], // Input real parts (Q1.15 format)
+    input  logic signed [15:0] x_imag [0:7], // Input imaginary parts (Q1.15 format)
+    output logic signed [15:0] fft_real [0:7], // Output real parts (Q1.15 format)
+    output logic signed [15:0] fft_imag [0:7]  // Output imaginary parts (Q1.15 format)
+);
+
+    // Define a complex number as a struct with real and imaginary parts
+    typedef struct packed {
+        logic signed [15:0] real;
+        logic signed [15:0] imag;
+    } complex_t;
+
+    // Input and output arrays of complex numbers
+    complex_t x     [0:7];
+    complex_t fft   [0:7];
+
+    // Intermediate arrays
+    complex_t even       [0:3];
+    complex_t odd        [0:3];
+    complex_t even_even  [0:1];
+    complex_t even_odd   [0:1];
+    complex_t odd_even   [0:1];
+    complex_t odd_odd    [0:1];
+    complex_t fft_even_even [0:1];
+    complex_t fft_even_odd  [0:1];
+    complex_t fft_odd_even  [0:1];
+    complex_t fft_odd_odd   [0:1];
+    complex_t fft_even    [0:3];
+    complex_t fft_odd     [0:3];
+    complex_t T           [0:3];
+
+    // Twiddle factors W_N^k in fixed-point representation (Q1.15 format)
+    localparam logic signed [15:0] W_N_real [0:3] = '{
+        16'sd32768,   // cos(0)          * 32768
+        16'sd23170,   // cos(pi/4)       * 32768
+        16'sd0,       // cos(pi/2)       * 32768
+        -16'sd23170   // cos(3*pi/4)     * 32768
+    };
+
+    localparam logic signed [15:0] W_N_imag [0:3] = '{
+        16'sd0,       // -sin(0)         * 32768
+        -16'sd23170,  // -sin(pi/4)      * 32768
+        -16'sd32768,  // -sin(pi/2)      * 32768
+        -16'sd23170   // -sin(3*pi/4)    * 32768
+    };
+
+    // Define negative imaginary unit (-j) in Q1.15 format
+    localparam complex_t neg_j = '{real: 16'sd0, imag: -16'sd32768};
+
+    // Function for complex multiplication in Q1.15 format
+    function automatic complex_t complex_mult (complex_t a, complex_t b);
+        logic signed [31:0] real_part;
+        logic signed [31:0] imag_part;
+        complex_t result;
+        begin
+            real_part = (a.real * b.real - a.imag * b.imag);
+            imag_part = (a.real * b.imag + a.imag * b.real);
+            // Scale back to Q1.15 format by shifting right by 15 bits
+            result.real = real_part >>> 15;
+            result.imag = imag_part >>> 15;
+            complex_mult = result;
+        end
+    endfunction
+
+    // Function for complex addition
+    function automatic complex_t complex_add (complex_t a, complex_t b);
+        complex_t result;
+        begin
+            result.real = a.real + b.real;
+            result.imag = a.imag + b.imag;
+            complex_add = result;
+        end
+    endfunction
+
+    // Function for complex subtraction
+    function automatic complex_t complex_sub (complex_t a, complex_t b);
+        complex_t result;
+        begin
+            result.real = a.real - b.real;
+            result.imag = a.imag - b.imag;
+            complex_sub = result;
+        end
+    endfunction
+
+    // Initialize complex input array
+    always_comb begin
+        for (int i = 0; i < 8; i++) begin
+            x[i].real = x_real[i];
+            x[i].imag = x_imag[i];
+        end
+    end
+
+    // Step 1: Split input into even and odd indexed elements
+    always_comb begin
+        for (int i = 0; i < 4; i++) begin
+            even[i] = x[2*i];
+            odd[i]  = x[2*i + 1];
+        end
+    end
+
+    // Step 2: Compute FFT of even-indexed elements (inlined fft_4 logic)
+    // Split even into even_even and even_odd
+    always_comb begin
+        for (int i = 0; i < 2; i++) begin
+            even_even[i] = even[2*i];
+            even_odd[i]  = even[2*i + 1];
+        end
+    end
+
+    // Compute fft_even_even
+    always_comb begin
+        complex_t T_even_even;
+        T_even_even = even_even[1];
+        fft_even_even[0] = complex_add(even_even[0], T_even_even);
+        fft_even_even[1] = complex_sub(even_even[0], T_even_even);
+    end
+
+    // Compute fft_even_odd
+    always_comb begin
+        complex_t T_even_odd;
+        T_even_odd = even_odd[1];
+        fft_even_odd[0] = complex_add(even_odd[0], T_even_odd);
+        fft_even_odd[1] = complex_sub(even_odd[0], T_even_odd);
+    end
+
+    // Compute fft_even
+    always_comb begin
+        complex_t T_even_4_0, T_even_4_1;
+        T_even_4_0 = fft_even_odd[0];
+        T_even_4_1 = complex_mult(neg_j, fft_even_odd[1]);
+
+        fft_even[0] = complex_add(fft_even_even[0], T_even_4_0);
+        fft_even[1] = complex_add(fft_even_even[1], T_even_4_1);
+        fft_even[2] = complex_sub(fft_even_even[0], T_even_4_0);
+        fft_even[3] = complex_sub(fft_even_even[1], T_even_4_1);
+    end
+
+    // Step 3: Compute FFT of odd-indexed elements (inlined fft_4 logic)
+    // Split odd into odd_even and odd_odd
+    always_comb begin
+        for (int i = 0; i < 2; i++) begin
+            odd_even[i] = odd[2*i];
+            odd_odd[i]  = odd[2*i + 1];
+        end
+    end
+
+    // Compute fft_odd_even
+    always_comb begin
+        complex_t T_odd_even;
+        T_odd_even = odd_even[1];
+        fft_odd_even[0] = complex_add(odd_even[0], T_odd_even);
+        fft_odd_even[1] = complex_sub(odd_even[0], T_odd_even);
+    end
+
+    // Compute fft_odd_odd
+    always_comb begin
+        complex_t T_odd_odd;
+        T_odd_odd = odd_odd[1];
+        fft_odd_odd[0] = complex_add(odd_odd[0], T_odd_odd);
+        fft_odd_odd[1] = complex_sub(odd_odd[0], T_odd_odd);
+    end
+
+    // Compute fft_odd
+    always_comb begin
+        complex_t T_odd_4_0, T_odd_4_1;
+        T_odd_4_0 = fft_odd_odd[0];
+        T_odd_4_1 = complex_mult(neg_j, fft_odd_odd[1]);
+
+        fft_odd[0] = complex_add(fft_odd_even[0], T_odd_4_0);
+        fft_odd[1] = complex_add(fft_odd_even[1], T_odd_4_1);
+        fft_odd[2] = complex_sub(fft_odd_even[0], T_odd_4_0);
+        fft_odd[3] = complex_sub(fft_odd_even[1], T_odd_4_1);
+    end
+
+    // Step 4: Compute twiddle factors and combine FFT results
+    always_comb begin
+        for (int k = 0; k < 4; k++) begin
+            complex_t W_N_k;
+            W_N_k.real = W_N_real[k];
+            W_N_k.imag = W_N_imag[k];
+            T[k] = complex_mult(W_N_k, fft_odd[k]);
+        end
+    end
+
+    // Combine the results
+    always_comb begin
+        for (int k = 0; k < 4; k++) begin
+            fft[k]     = complex_add(fft_even[k], T[k]);
+            fft[k + 4] = complex_sub(fft_even[k], T[k]);
+        end
+    end
+
+    // Assign outputs
+    always_comb begin
+        for (int i = 0; i < 8; i++) begin
+            fft_real[i] = fft[i].real;
+            fft_imag[i] = fft[i].imag;
+        end
+    end
+
+endmodule

@@ -1,0 +1,215 @@
+module fft_module;
+    // Define complex number type
+    typedef struct packed {
+        real re;
+        real im;
+    } complex_t;
+
+    // Precomputed twiddle factors
+    parameter complex_t twiddle_factors [0:15] = '{
+        '{1.0000, 0.0000},   // W_16^0
+        '{0.9239, -0.3827},  // W_16^1
+        '{0.7071, -0.7071},  // W_16^2
+        '{0.3827, -0.9239},  // W_16^3
+        '{0.0000, -1.0000},  // W_16^4
+        '{-0.3827, -0.9239}, // W_16^5
+        '{-0.7071, -0.7071}, // W_16^6
+        '{-0.9239, -0.3827}, // W_16^7
+        '{-1.0000, -0.0000}, // W_16^8
+        '{-0.9239, 0.3827},  // W_16^9
+        '{-0.7071, 0.7071},  // W_16^10
+        '{-0.3827, 0.9239},  // W_16^11
+        '{-0.0000, 1.0000},  // W_16^12
+        '{0.3827, 0.9239},   // W_16^13
+        '{0.7071, 0.7071},   // W_16^14
+        '{0.9239, 0.3827}    // W_16^15
+    };
+
+    // Complex addition
+    function automatic complex_t complex_add(complex_t a, complex_t b);
+        complex_add.re = a.re + b.re;
+        complex_add.im = a.im + b.im;
+    endfunction
+
+    // Complex subtraction
+    function automatic complex_t complex_sub(complex_t a, complex_t b);
+        complex_sub.re = a.re - b.re;
+        complex_sub.im = a.im - b.im;
+    endfunction
+
+    // Complex multiplication
+    function automatic complex_t complex_mult(complex_t a, complex_t b);
+        complex_mult.re = a.re * b.re - a.im * b.im;
+        complex_mult.im = a.re * b.im + a.im * b.re;
+    endfunction
+
+    // Compute twiddle factors
+    function automatic complex_t compute_twiddle_factors(int N, int k);
+        int idx;
+        if (N == 16) begin
+            idx = k % 16;
+            compute_twiddle_factors = twiddle_factors[idx];
+        end else if (N == 8) begin
+            idx = (k * 2) % 16;
+            compute_twiddle_factors = twiddle_factors[idx];
+        end else if (N == 4) begin
+            idx = (k * 4) % 16;
+            compute_twiddle_factors = twiddle_factors[idx];
+        end else if (N == 2) begin
+            idx = (k * 8) % 16;
+            compute_twiddle_factors = twiddle_factors[idx];
+        end else begin
+            $display("Error: Twiddle factors are only precomputed for N=2, 4, 8, or 16.");
+            compute_twiddle_factors = '{0.0, 0.0};
+        end
+    endfunction
+
+    // FFT of 2 elements
+    task automatic fft_2_elements(
+        input complex_t even,
+        input complex_t odd,
+        output complex_t fft_out[0:1]
+    );
+        complex_t T0;
+        T0 = complex_mult(compute_twiddle_factors(2, 0), odd);
+        fft_out[0] = complex_add(even, T0);
+        fft_out[1] = complex_sub(even, T0);
+    endtask
+
+    // FFT of 4 elements
+    task automatic fft_4_elements(
+        input complex_t x[0:3],
+        output complex_t fft_out[0:3]
+    );
+        complex_t even[0:1];
+        complex_t odd[0:1];
+        complex_t fft_even[0:1];
+        complex_t fft_odd[0:1];
+        complex_t T0, T1;
+
+        // Split even and odd
+        even[0] = x[0];
+        even[1] = x[2];
+        odd[0] = x[1];
+        odd[1] = x[3];
+
+        // Compute fft_even and fft_odd
+        fft_2_elements(even[0], even[1], fft_even);
+        fft_2_elements(odd[0], odd[1], fft_odd);
+
+        // Compute T0 and T1
+        T0 = complex_mult(compute_twiddle_factors(4, 0), fft_odd[0]);
+        T1 = complex_mult(compute_twiddle_factors(4, 1), fft_odd[1]);
+
+        // Compute fft_out
+        fft_out[0] = complex_add(fft_even[0], T0);
+        fft_out[1] = complex_add(fft_even[1], T1);
+        fft_out[2] = complex_sub(fft_even[0], T0);
+        fft_out[3] = complex_sub(fft_even[1], T1);
+    endtask
+
+    // FFT of 8 elements
+    task automatic fft_8_elements(
+        input complex_t x[0:7],
+        output complex_t fft_out[0:7]
+    );
+        complex_t even[0:3];
+        complex_t odd[0:3];
+        complex_t fft_even[0:3];
+        complex_t fft_odd[0:3];
+        complex_t T[0:3];
+        int k;
+
+        // Split even and odd
+        for (k = 0; k < 4; k = k + 1) begin
+            even[k] = x[2*k];
+            odd[k] = x[2*k+1];
+        end
+
+        // Compute fft_even and fft_odd
+        fft_4_elements(even, fft_even);
+        fft_4_elements(odd, fft_odd);
+
+        // Compute T[k]
+        for (k = 0; k < 4; k = k + 1) begin
+            T[k] = complex_mult(compute_twiddle_factors(8, k), fft_odd[k]);
+        end
+
+        // Compute fft_out
+        for (k = 0; k < 4; k = k + 1) begin
+            fft_out[k]     = complex_add(fft_even[k], T[k]);
+            fft_out[k + 4] = complex_sub(fft_even[k], T[k]);
+        end
+    endtask
+
+    // FFT of 16 elements
+    task automatic fft_16_elements(
+        input complex_t x[0:15],
+        output complex_t fft_out[0:15]
+    );
+        complex_t even[0:7];
+        complex_t odd[0:7];
+        complex_t fft_even[0:7];
+        complex_t fft_odd[0:7];
+        complex_t T[0:7];
+        int k;
+
+        // Split even and odd
+        for (k = 0; k < 8; k = k + 1) begin
+            even[k] = x[2*k];
+            odd[k]  = x[2*k+1];
+        end
+
+        // Compute fft_even and fft_odd
+        fft_8_elements(even, fft_even);
+        fft_8_elements(odd, fft_odd);
+
+        // Compute T[k]
+        for (k = 0; k < 8; k = k + 1) begin
+            T[k] = complex_mult(compute_twiddle_factors(16, k), fft_odd[k]);
+        end
+
+        // Compute fft_out
+        for (k = 0; k < 8; k = k + 1) begin
+            fft_out[k]     = complex_add(fft_even[k], T[k]);
+            fft_out[k + 8] = complex_sub(fft_even[k], T[k]);
+        end
+    endtask
+
+    // Testbench to verify the FFT with provided inputs
+    initial begin
+        complex_t x[0:15];
+        complex_t fft_result[0:15];
+        int i;
+
+        // Initialize input x with the provided values
+        x[0].re  = 0.0;      x[0].im  = 0.0;
+        x[1].re  = 783.5;    x[1].im  = 0.0;
+        x[2].re  = 1448.0;   x[2].im  = 0.0;
+        x[3].re  = 1892.0;   x[3].im  = 0.0;
+        x[4].re  = 2048.0;   x[4].im  = 0.0;
+        x[5].re  = 1892.0;   x[5].im  = 0.0;
+        x[6].re  = 1448.0;   x[6].im  = 0.0;
+        x[7].re  = 783.5;    x[7].im  = 0.0;
+        x[8].re  = 0.0;      x[8].im  = 0.0;
+        x[9].re  = -784.0;   x[9].im  = 0.0;
+        x[10].re = -1448.5;  x[10].im = 0.0;
+        x[11].re = -1892.5;  x[11].im = 0.0;
+        x[12].re = -2048.0;  x[12].im = 0.0;
+        x[13].re = -1892.5;  x[13].im = 0.0;
+        x[14].re = -1448.5;  x[14].im = 0.0;
+        x[15].re = -784.0;   x[15].im = 0.0;
+
+        // Call the FFT function
+        fft_16_elements(x, fft_result);
+
+        // Display the results
+        $display("FFT Results:");
+        for (i = 0; i < 16; i = i + 1) begin
+            $display("fft_result[%0d] = %f + %fi", i, fft_result[i].re, fft_result[i].im);
+        end
+
+        $finish;
+    end
+
+endmodule

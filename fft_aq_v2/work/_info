@@ -1,0 +1,115 @@
+m255
+K3
+13
+cModel Technology
+Z0 dC:\Users\amazi\Documents\GitHub\dsd-labs\fft_modelsim
+vfft_16_elements
+Z1 DXx6 sv_std 3 std 0 22 F[19LRNL:5;XmIFh[XOPn1
+Z2 IhUib;H8T=c_U?FkDWR`m>3
+Z3 V^d_^;eZ<8[S^J82_25G4S2
+Z4 !s105 fft_16_elements_sv_unit
+S1
+Z5 dC:\Users\amazi\Documents\GitHub\dsd-labs\fft_aq_v2
+Z6 w1732380886
+Z7 8C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_16_elements.sv
+Z8 FC:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_16_elements.sv
+L0 1
+Z9 OV;L;10.1d;51
+r1
+31
+Z10 !s90 -reportprogress|300|-work|work|-sv|C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_16_elements.sv|
+Z11 o-work work -sv -O0
+Z12 !s100 IjcZ[^AcQ_oja9RFhnM=?0
+Z13 !s108 1732380983.274000
+Z14 !s107 C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_16_elements.sv|
+!i10b 1
+!s85 0
+!s101 -O0
+vfft_8_elements
+R1
+Z15 !s100 A7k7zDZkUYZKKaD;Zf9L:3
+Z16 I=dS1_B[OPf:0Nb8ON8Ez[0
+Z17 V=Z^US7Mlk`Lc@lWNCD2cd2
+Z18 !s105 fft_8_elements_sv_unit
+S1
+R5
+Z19 w1732247410
+Z20 8C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_8_elements.sv
+Z21 FC:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_8_elements.sv
+L0 1
+R9
+r1
+31
+Z22 !s90 -reportprogress|300|-work|work|-sv|C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_8_elements.sv|
+R11
+!i10b 1
+!s85 0
+Z23 !s108 1732380983.327000
+Z24 !s107 C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_8_elements.sv|
+!s101 -O0
+vsplit_even_odd
+R1
+!i10b 1
+Z25 !s100 mC=FV9n5i;?`B7QVo36<62
+Z26 INo_i]1GcFZVWj[NfU=DV<3
+Z27 V6iJ@^F2m][b`@k0f9`J[=2
+Z28 !s105 split_even_odd_sv_unit
+S1
+R5
+Z29 w1732246375
+Z30 8C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/split_even_odd.sv
+Z31 FC:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/split_even_odd.sv
+L0 1
+R9
+r1
+!s85 0
+31
+!s108 1732380983.385000
+!s107 C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/split_even_odd.sv|
+Z32 !s90 -reportprogress|300|-work|work|-sv|C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/split_even_odd.sv|
+!s101 -O0
+R11
+vtb
+R1
+Z33 !s100 5zED`F<lz@=L=cZmRWRlN2
+Z34 IY6BOGeReb_>cWTVU<1B4I2
+Z35 V]GNEAgFX;Z]k:hlB2JE]K0
+Z36 !s105 tb_sv_unit
+S1
+R5
+Z37 w1732249830
+Z38 8C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/tb.sv
+Z39 FC:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/tb.sv
+L0 3
+R9
+r1
+31
+Z40 !s90 -reportprogress|300|-work|work|-sv|C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/tb.sv|
+R11
+Z41 !s108 1732380983.223000
+Z42 !s107 C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/tb.sv|
+!i10b 1
+!s85 0
+!s101 -O0
+vtop
+R1
+Z43 I;^GnlJn7;K@LIff]bkUdO0
+Z44 VQ^PJgSo6zQWVSko1R?9dE2
+Z45 !s105 top_sv_unit
+S1
+R5
+Z46 w1732247867
+Z47 8C:\Users\amazi\Documents\GitHub\dsd-labs\fft_aq_v2\top.sv
+Z48 FC:\Users\amazi\Documents\GitHub\dsd-labs\fft_aq_v2\top.sv
+L0 1
+R9
+r1
+31
+R11
+Z49 !s100 TckRSf4<?zG<aLQVA]1`R2
+Z50 !s108 1732380983.176000
+Z51 !s107 C:\Users\amazi\Documents\GitHub\dsd-labs\fft_aq_v2\top.sv|
+Z52 !s90 -reportprogress|300|-work|work|-sv|C:\Users\amazi\Documents\GitHub\dsd-labs\fft_aq_v2\top.sv|
+!i10b 1
+!s85 0
+!s101 -O0

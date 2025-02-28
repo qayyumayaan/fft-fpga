@@ -1,0 +1,92 @@
+module fft16 (
+    input  logic signed [15:0] inputs[0:15],  // 16 16-bit signed inputs
+    output logic signed [15:0] fft_real[0:15], // 16 16-bit signed real parts
+    output logic signed [15:0] fft_imag[0:15]  // 16 16-bit signed imaginary parts
+);
+
+    // Define a complex number structure with real and imaginary parts
+    typedef struct packed {
+        logic signed [31:0] real;
+        logic signed [31:0] imag;
+    } complex32;
+
+    // Define twiddle factor structure
+    typedef struct packed {
+        logic signed [15:0] real;
+        logic signed [15:0] imag;
+    } complex16;
+
+    // Number of points
+    localparam int N = 16;
+    localparam int STAGES = 4;
+
+    // Input data array
+    complex32 x[0:N-1];
+
+    // Twiddle factors
+    complex16 W[0:7];
+
+    // Initialize twiddle factors
+    initial begin
+        W[0].real =  16384; W[0].imag =     0;     // W0 = 1 + j0
+        W[1].real =  15137; W[1].imag = -6270;     // W1 = cos(22.5°) - j*sin(22.5°)
+        W[2].real =  11585; W[2].imag = -11585;    // W2 = cos(45°) - j*sin(45°)
+        W[3].real =   6270; W[3].imag = -15137;    // W3 = cos(67.5°) - j*sin(67.5°)
+        W[4].real =      0; W[4].imag = -16384;    // W4 = cos(90°) - j*sin(90°)
+        W[5].real =  -6270; W[5].imag = -15137;    // W5 = cos(112.5°) - j*sin(112.5°)
+        W[6].real = -11585; W[6].imag = -11585;    // W6 = cos(135°) - j*sin(135°)
+        W[7].real = -15137; W[7].imag =  -6270;    // W7 = cos(157.5°) - j*sin(157.5°)
+    end
+
+    // Main FFT computation
+    always_comb begin
+        // Initialize complex input array with zero imaginary parts
+        for (int i = 0; i < N; i++) begin
+            x[i].real = {inputs[i], 16'd0}; // Align to Q1.14 fixed-point format
+            x[i].imag = 32'd0;
+        end
+
+        // Perform FFT stages
+        for (int s = 0; s < STAGES; s++) begin
+            int m_max = 1 << s;
+            int distance = m_max << 1;
+            int twiddle_step = N / distance;
+
+            for (int m = 0; m < m_max; m++) begin
+                // Select appropriate twiddle factor
+                complex16 Wm = W[m * twiddle_step];
+
+                for (int k = m; k < N; k += distance) begin
+                    int index1 = k;
+                    int index2 = k + m_max;
+
+                    // Perform butterfly operations
+                    // Multiply x[index2] by Wm
+                    int signed [63:0] t_real_temp = x[index2].real * Wm.real - x[index2].imag * Wm.imag;
+                    int signed [63:0] t_imag_temp = x[index2].real * Wm.imag + x[index2].imag * Wm.real;
+
+                    // Scale back to Q1.14 format
+                    int signed [31:0] t_real = (t_real_temp + (1 << 13)) >>> 14;
+                    int signed [31:0] t_imag = (t_imag_temp + (1 << 13)) >>> 14;
+
+                    // Store temporary values for x[index1]
+                    int signed [31:0] u_real = x[index1].real;
+                    int signed [31:0] u_imag = x[index1].imag;
+
+                    // Update x[index1] and x[index2] with scaling to prevent overflow
+                    x[index1].real = (u_real + t_real) >>> 1;
+                    x[index1].imag = (u_imag + t_imag) >>> 1;
+
+                    x[index2].real = (u_real - t_real) >>> 1;
+                    x[index2].imag = (u_imag - t_imag) >>> 1;
+                end
+            end
+        end
+
+        // Assign the final results to the outputs, extracting the upper 16 bits
+        for (int i = 0; i < N; i++) begin
+            fft_real[i] = x[i].real[30:15]; // Extract bits [30:15] for 16-bit output
+            fft_imag[i] = x[i].imag[30:15];
+        end
+    end
+endmodule

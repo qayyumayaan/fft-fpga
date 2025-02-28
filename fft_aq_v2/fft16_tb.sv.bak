@@ -1,0 +1,69 @@
+module fft16_tb;
+
+    // Testbench signals
+    logic signed [15:0] inputs[0:15];
+    logic signed [15:0] fft_real[0:15];
+    logic signed [15:0] fft_imag[0:15];
+
+    // Instantiate the fft16 module
+    fft16 uut (
+        .inputs(inputs),
+        .fft_real(fft_real),
+        .fft_imag(fft_imag)
+    );
+
+    // Scaling factor for fixed-point representation
+    real scaling_factor;
+
+    // Initialize the inputs
+    initial begin
+        // Given input array x
+        real x[0:15] = '{
+            0.0,       // x[0]
+            783.5,     // x[1]
+            1448.0,    // x[2]
+            1892.0,    // x[3]
+            2048.0,    // x[4]
+            1892.0,    // x[5]
+            1448.0,    // x[6]
+            783.5,     // x[7]
+            0.0,       // x[8]
+            -784.0,    // x[9]
+            -1448.5,   // x[10]
+            -1892.5,   // x[11]
+            -2048.0,   // x[12]
+            -1892.5,   // x[13]
+            -1448.5,   // x[14]
+            -784.0     // x[15]
+        };
+
+        // Determine the scaling factor
+        // Max absolute value in x is 2048.0
+        // We map this to the maximum value representable by 16-bit signed integer (32767)
+        scaling_factor = 32767.0 / 2048.0;  // Approx 16.0
+
+        // Convert real inputs to fixed-point representation
+        for (int i = 0; i < 16; i++) begin
+            // Apply scaling and round to nearest integer
+            inputs[i] = $rtoi(x[i] * scaling_factor + (x[i] >= 0 ? 0.5 : -0.5));
+        end
+
+        // Wait for combinational logic to settle
+        #10;
+
+        // Display the inputs
+        $display("Scaled Inputs:");
+        for (int i = 0; i < 16; i++) begin
+            $display("inputs[%0d] = %0d", i, inputs[i]);
+        end
+
+        // Display the outputs
+        $display("\nFFT Outputs:");
+        for (int i = 0; i < 16; i++) begin
+            $display("Index %0d: Real = %0d, Imag = %0d", i, fft_real[i], fft_imag[i]);
+        end
+
+        $finish;
+    end
+
+endmodule

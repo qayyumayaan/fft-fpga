@@ -1,0 +1,11 @@
+transcript on
+if {[file exists rtl_work]} {
+	vdel -lib rtl_work -all
+}
+vlib rtl_work
+vmap work rtl_work
+
+vlog -sv -work work +incdir+C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2 {C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_8_elements.sv}
+vlog -sv -work work +incdir+C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2 {C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_16_elements.sv}
+vlog -sv -work work +incdir+C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2 {C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/top.sv}
+

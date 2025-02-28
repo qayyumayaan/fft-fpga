@@ -1,0 +1,76 @@
+# Reading C:/altera/13.1/modelsim_ase/tcl/vsim/pref.tcl 
+# do fft_aq_v2_run_msim_rtl_verilog.do 
+# if {[file exists rtl_work]} {
+# 	vdel -lib rtl_work -all
+# }
+# vlib rtl_work
+# vmap work rtl_work
+# Copying C:\altera\13.1\modelsim_ase\win32aloem/../modelsim.ini to modelsim.ini
+# Modifying modelsim.ini
+# ** Warning: Copied C:\altera\13.1\modelsim_ase\win32aloem/../modelsim.ini to modelsim.ini.
+#          Updated modelsim.ini.
+# 
+# vlog -sv -work work +incdir+C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2 {C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_8_elements.sv}
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module fft_8_elements
+# 
+# Top level modules:
+# 	fft_8_elements
+# vlog -sv -work work +incdir+C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2 {C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/fft_16_elements.sv}
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module fft_16_elements
+# 
+# Top level modules:
+# 	fft_16_elements
+# vlog -sv -work work +incdir+C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2 {C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/top.sv}
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module top
+# 
+# Top level modules:
+# 	top
+# 
+# vlog -sv -work work +incdir+C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2 {C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/tb.sv}
+# Model Technology ModelSim ALTERA vlog 10.1d Compiler 2012.11 Nov  2 2012
+# -- Compiling module tb
+# 
+# Top level modules:
+# 	tb
+# 
+# vsim -t 1ps -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L altera_lnsim_ver -L cycloneive_ver -L rtl_work -L work -voptargs="+acc"  tb
+# vsim -L altera_ver -L lpm_ver -L sgate_ver -L altera_mf_ver -L altera_lnsim_ver -L cycloneive_ver -L rtl_work -L work -voptargs=\"+acc\" -t 1ps tb 
+# Loading sv_std.std
+# Loading work.tb
+# Loading work.fft_16_elements
+# Loading work.fft_8_elements
+# 
+# add wave *
+# view structure
+# .main_pane.structure.interior.cs.body.struct
+# view signals
+# .main_pane.objects.interior.cs.body.tree
+# run 100 ns
+# 
+# Final FFT Results (Q1.15):
+# FFT[0] = 0 + j0
+# FFT[1] = 6981 + j30434
+# FFT[2] = 12724 + j-30720
+# FFT[3] = 14653 + j-21932
+# FFT[4] = -5110 + j-5110
+# FFT[5] = -16907 + j11296
+# FFT[6] = -11807 + j4890
+# FFT[7] = -10533 + j2093
+# FFT[8] = 19992 + j0
+# FFT[9] = -10533 + j-2094
+# FFT[10] = -11806 + j-4890
+# FFT[11] = -16907 + j-11296
+# FFT[12] = -5110 + j5110
+# FFT[13] = 14655 + j21932
+# FFT[14] = 12725 + j30720
+# FFT[15] = 6983 + j-30433
+# ** Note: $finish    : C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/tb.sv(46)
+#    Time: 10 ns  Iteration: 0  Instance: /tb
+# 1
+# Break in Module tb at C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/tb.sv line 46
+# Simulation Breakpoint: 1
+# Break in Module tb at C:/Users/amazi/Documents/GitHub/dsd-labs/fft_aq_v2/tb.sv line 46
+# MACRO ./fft_aq_v2_run_msim_rtl_verilog.do PAUSED at line 19

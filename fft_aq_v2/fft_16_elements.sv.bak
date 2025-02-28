@@ -1,0 +1,143 @@
+module fft_16_elements (
+    input  logic signed [15:0] x_real [0:15], // Input real parts (Q1.15 format)
+    input  logic signed [15:0] x_imag [0:15], // Input imaginary parts (Q1.15 format)
+    output logic signed [15:0] fft_real [0:15], // Output real parts (Q1.15 format)
+    output logic signed [15:0] fft_imag [0:15]  // Output imaginary parts (Q1.15 format)
+);
+
+    // Define a complex number as a struct with real and imaginary parts
+    typedef struct packed {
+        logic signed [15:0] real;
+        logic signed [15:0] imag;
+    } complex_t;
+
+    // Input and output arrays of complex numbers
+    complex_t x     [0:15];
+    complex_t fft   [0:15];
+
+    // Intermediate arrays
+    complex_t even  [0:7];
+    complex_t odd   [0:7];
+    complex_t fft_even [0:7];
+    complex_t fft_odd  [0:7];
+    complex_t T     [0:7];
+
+    // Twiddle factors W_N^k in fixed-point representation (Q1.15 format)
+    localparam logic signed [15:0] W_N_real [0:7] = '{
+        32768,   // cos(0)          * 32768
+        30274,   // cos(pi/8)       * 32768
+        23170,   // cos(pi/4)       * 32768
+        12540,   // cos(3*pi/8)     * 32768
+        0,       // cos(pi/2)       * 32768
+        -12540,  // cos(5*pi/8)     * 32768
+        -23170,  // cos(3*pi/4)     * 32768
+        -30274   // cos(7*pi/8)     * 32768
+    };
+
+    localparam logic signed [15:0] W_N_imag [0:7] = '{
+        0,       // -sin(0)         * 32768
+        -12540,  // -sin(pi/8)      * 32768
+        -23170,  // -sin(pi/4)      * 32768
+        -30274,  // -sin(3*pi/8)    * 32768
+        -32768,  // -sin(pi/2)      * 32768
+        -30274,  // -sin(5*pi/8)    * 32768
+        -23170,  // -sin(3*pi/4)    * 32768
+        -12540   // -sin(7*pi/8)    * 32768
+    };
+
+    // Function for complex multiplication in Q1.15 format
+    function automatic complex_t complex_mult (complex_t a, complex_t b);
+        logic signed [31:0] real_part;
+        logic signed [31:0] imag_part;
+        complex_t result;
+        begin
+            real_part = (a.real * b.real - a.imag * b.imag);
+            imag_part = (a.real * b.imag + a.imag * b.real);
+            // Scale back to Q1.15 format by shifting right by 15 bits
+            result.real = real_part >>> 15;
+            result.imag = imag_part >>> 15;
+            complex_mult = result;
+        end
+    endfunction
+
+    // Function for complex addition
+    function automatic complex_t complex_add (complex_t a, complex_t b);
+        complex_t result;
+        begin
+            result.real = a.real + b.real;
+            result.imag = a.imag + b.imag;
+            complex_add = result;
+        end
+    endfunction
+
+    // Function for complex subtraction
+    function automatic complex_t complex_sub (complex_t a, complex_t b);
+        complex_t result;
+        begin
+            result.real = a.real - b.real;
+            result.imag = a.imag - b.imag;
+            complex_sub = result;
+        end
+    endfunction
+
+    // Initialize complex input array
+    always_comb begin
+        for (int i = 0; i < 16; i++) begin
+            x[i].real = x_real[i];
+            x[i].imag = x_imag[i];
+        end
+    end
+
+    // Step 2: Split input into even and odd elements
+    always_comb begin
+        for (int i = 0; i < 8; i++) begin
+            even[i] = x[2*i];
+            odd[i]  = x[2*i + 1];
+        end
+    end
+
+    // Step 3 & 4: Compute FFT of even and odd elements using fft_8_elements
+    // Assuming fft_8_elements module is defined elsewhere
+    fft_8_elements fft_even_inst (
+        .x_real({for (int i = 0; i < 8; i++) even[i].real}),
+        .x_imag({for (int i = 0; i < 8; i++) even[i].imag}),
+        .fft_real({for (int i = 0; i < 8; i++) fft_even[i].real}),
+        .fft_imag({for (int i = 0; i < 8; i++) fft_even[i].imag})
+    );
+
+    fft_8_elements fft_odd_inst (
+        .x_real({for (int i = 0; i < 8; i++) odd[i].real}),
+        .x_imag({for (int i = 0; i < 8; i++) odd[i].imag}),
+        .fft_real({for (int i = 0; i < 8; i++) fft_odd[i].real}),
+        .fft_imag({for (int i = 0; i < 8; i++) fft_odd[i].imag})
+    );
+
+    // Step 5: Compute T_k = W_N^k * fft_odd[k]
+    always_comb begin
+        for (int k = 0; k < 8; k++) begin
+            complex_t W_N_k;
+            W_N_k.real = W_N_real[k];
+            W_N_k.imag = W_N_imag[k];
+            T[k] = complex_mult(W_N_k, fft_odd[k]);
+        end
+    end
+
+    // Step 6: Combine the results
+    always_comb begin
+        for (int k = 0; k < 8; k++) begin
+            // fft[k] = fft_even[k] + T[k]
+            fft[k]     = complex_add(fft_even[k], T[k]);
+            // fft[k+8] = fft_even[k] - T[k]
+            fft[k+8]   = complex_sub(fft_even[k], T[k]);
+        end
+    end
+
+    // Assign outputs
+    always_comb begin
+        for (int i = 0; i < 16; i++) begin
+            fft_real[i] = fft[i].real;
+            fft_imag[i] = fft[i].imag;
+        end
+    end
+
+endmodule
